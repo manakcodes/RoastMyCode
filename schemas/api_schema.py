@@ -9,7 +9,7 @@ VALID_MODES = list(ROAST_MODES.keys()) + list(ANALYSIS_MODES.keys())
 
 
 class RoastRequestSchema(BaseModel):
-    code: str = Field(..., min_length=10, max_length=4000, description="Code to roast")
+    code: str = Field(..., min_length=10, max_length=10000, description="Code to roast")
     mode: str = Field(default="senior_dev", description="Roast mode")
     language: Optional[str] = Field(
         default="python", description="Programming language"

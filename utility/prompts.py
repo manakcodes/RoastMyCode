@@ -60,7 +60,7 @@ ROAST_MODES = {
             grade is a letter grade — A, B, C, D, F with optional + or -.
         """,
     },
-    "chad_senior_dev": {
+    "senior_dev": {
         "key": "senior_dev",
         "name": "The Senior Dev",
         "tagline": "10 years in. Dead inside. Allergic to bad variable names.",
@@ -82,7 +82,7 @@ ROAST_MODES = {
             grade is a letter grade — A, B, C, D, F with optional + or -.
         """,
     },
-    "lame_vibe_coder": {
+    "vibe_coder": {
         "key": "vibe_coder",
         "name": "The Vibe Coder",
         "tagline": "The vibes are off and the code knows it.",
@@ -103,7 +103,7 @@ ROAST_MODES = {
             grade is a letter grade — A, B, C, D, F with optional + or -.
         """,
     },
-    "unpaid_intern": {
+    "the_intern": {
         "key": "the_intern",
         "name": "The Intern",
         "tagline": "Fresh out of bootcamp. Genuinely horrified.",
@@ -125,7 +125,7 @@ ROAST_MODES = {
             grade is a letter grade — A, B, C, D, F with optional + or -.
         """,
     },
-    "the_next_door_10x_dev": {
+    "10x_dev": {
         "key": "10x_dev",
         "name": "The 10x Developer",
         "tagline": "Rewrote this in their head before you finished explaining it.",
@@ -147,7 +147,7 @@ ROAST_MODES = {
             grade is a letter grade — A, B, C, D, F with optional + or -.
         """,
     },
-    "the_compiler": {
+    "compiler": {
         "key": "compiler",
         "name": "The Compiler",
         "tagline": "No feelings. No mercy. Just errors.",
@@ -196,7 +196,7 @@ ROAST_MODES = {
         The score should be slightly higher than deserved because you believe in them.
     """,
     },
-    "the_silicon_valley_vc": {
+    "the_vc": {
         "key": "the_vc",
         "name": "The Silicon Valley VC",
         "tagline": "This doesn't scale. Where is the AI-agentic layer?",
@@ -308,7 +308,7 @@ ROAST_MODES = {
 
 
 ANALYSIS_MODES = {
-    "code_metrics_analysis": {
+    "code_metrics": {
         "key": "code_metrics",
         "name": "Code Metrics Analyst",
         "tagline": "Clinical. Statistical. Treats code like a system under observation.",

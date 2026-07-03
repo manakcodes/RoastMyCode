@@ -84,12 +84,12 @@ def get_llm_response(
         parsed = parse_llm_response(raw)
 
         if parsed is None:
-            return {"error": "Invalid JSON from LLM", "raw": raw}
+            return {"error": "INVALID JSON from LLM", "raw": raw}
 
         return parsed
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"ERROR": str(e)}
 
 
 my_bad_code = """

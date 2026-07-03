@@ -1,0 +1,1387 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RoastMyCode</title>
+    <style>
+      :root {
+        --bg: #080808;
+        --surface: #0f0f0f;
+        --surface-2: #141414;
+        --border: #1c1c1c;
+        --border-hi: #2e2e2e;
+        --text: #e8e8e8;
+        --text-2: #888;
+        --text-3: #444;
+        --white: #fff;
+        --r: 6px;
+        --r-sm: 4px;
+        --mono:
+          "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+        --sans:
+          -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui,
+          sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* ── HEADER ── */
+      .hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        height: 48px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+
+      .logo {
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--white);
+      }
+      .logo em {
+        color: var(--text-3);
+        font-style: normal;
+      }
+
+      .hdr-right {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .hdr-badge {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text-3);
+        letter-spacing: 0.04em;
+      }
+
+      #statusDot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--text-3);
+        transition: background 0.3s;
+      }
+      #statusDot.online {
+        background: #3a3;
+      }
+      #statusDot.error {
+        background: #833;
+      }
+      #statusDot.loading {
+        background: #773;
+        animation: blink 1s ease-in-out infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* ── MODE RAIL ── */
+      .mode-rail {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--border);
+        overflow-x: auto;
+        flex-shrink: 0;
+        scrollbar-width: none;
+      }
+      .mode-rail::-webkit-scrollbar {
+        display: none;
+      }
+
+      .mode-sep {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .mode-sep-line {
+        width: 1px;
+        height: 28px;
+        background: var(--border);
+      }
+      .mode-sep-label {
+        font-size: 9px;
+        color: var(--text-3);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+      }
+
+      .mode-card {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 6px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        cursor: pointer;
+        white-space: nowrap;
+        transition:
+          border-color 0.1s,
+          background 0.1s;
+        flex-shrink: 0;
+        background: transparent;
+        user-select: none;
+      }
+      .mode-card:hover {
+        border-color: var(--border-hi);
+        background: var(--surface);
+      }
+      .mode-card.active {
+        border-color: var(--white);
+        background: var(--surface-2);
+      }
+
+      .mc-name {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--text-2);
+        transition: color 0.1s;
+      }
+      .mc-tag {
+        font-size: 10px;
+        color: var(--text-3);
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mode-card.active .mc-name {
+        color: var(--white);
+      }
+      .mode-card.active .mc-tag {
+        color: var(--text-2);
+      }
+
+      /* ── WORKSPACE ── */
+      .ws {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        flex: 1;
+        overflow: hidden;
+        min-height: 0;
+      }
+
+      /* ── INPUT PANEL ── */
+      .input-panel {
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--border);
+        overflow: hidden;
+      }
+
+      .panel-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        gap: 8px;
+      }
+
+      .panel-label {
+        font-size: 10px;
+        color: var(--text-3);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+      }
+
+      .lang-select {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        color: var(--text-2);
+        font-size: 11px;
+        padding: 3px 8px;
+        cursor: pointer;
+        outline: none;
+        font-family: var(--mono);
+        transition: border-color 0.1s;
+      }
+      .lang-select:hover {
+        border-color: var(--border-hi);
+        color: var(--text);
+      }
+
+      .code-wrap {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .code-input {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.65;
+        resize: none;
+        padding: 14px 16px;
+        caret-color: var(--white);
+        tab-size: 2;
+      }
+      .code-input::placeholder {
+        color: var(--text-3);
+      }
+
+      /* ── ACTION BAR ── */
+      .action-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+
+      .btn {
+        padding: 6px 14px;
+        border-radius: var(--r-sm);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.1s;
+        font-family: var(--sans);
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+      }
+      .btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      .btn-prim {
+        background: var(--white);
+        color: #000;
+        border-color: var(--white);
+      }
+      .btn-prim:hover:not(:disabled) {
+        background: #d8d8d8;
+      }
+
+      .btn-sec {
+        background: transparent;
+        color: var(--text-2);
+        border-color: var(--border);
+      }
+      .btn-sec:hover:not(:disabled) {
+        border-color: var(--border-hi);
+        color: var(--text);
+        background: var(--surface);
+      }
+
+      .char-meter {
+        margin-left: auto;
+        font-size: 10.5px;
+        color: var(--text-3);
+        font-family: var(--mono);
+        transition: color 0.15s;
+      }
+      .char-meter.warn {
+        color: #666;
+      }
+      .char-meter.over {
+        color: #c44;
+      }
+
+      /* ── OUTPUT PANEL ── */
+      .output-panel {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .output-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px 20px;
+        min-height: 0;
+      }
+
+      /* ── STATES ── */
+      .state-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 10px;
+        color: var(--text-3);
+        text-align: center;
+      }
+      .state-empty-glyph {
+        font-family: var(--mono);
+        font-size: 28px;
+        opacity: 0.25;
+        letter-spacing: -0.1em;
+      }
+      .state-empty-title {
+        font-size: 13px;
+      }
+      .state-empty-hint {
+        font-size: 11px;
+        opacity: 0.5;
+      }
+
+      .state-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 14px;
+      }
+      .spinner {
+        display: flex;
+        gap: 5px;
+      }
+      .spin-dot {
+        width: 5px;
+        height: 5px;
+        background: var(--text-3);
+        border-radius: 50%;
+        animation: rise 1.1s ease-in-out infinite;
+      }
+      .spin-dot:nth-child(2) {
+        animation-delay: 0.18s;
+      }
+      .spin-dot:nth-child(3) {
+        animation-delay: 0.36s;
+      }
+      @keyframes rise {
+        0%,
+        100% {
+          opacity: 0.2;
+          transform: translateY(2px);
+        }
+        50% {
+          opacity: 1;
+          transform: translateY(-2px);
+        }
+      }
+
+      .loading-msg {
+        font-size: 11px;
+        color: var(--text-3);
+        font-family: var(--mono);
+      }
+
+      .state-error {
+        padding: 14px;
+        background: rgba(200, 60, 60, 0.05);
+        border: 1px solid rgba(200, 60, 60, 0.12);
+        border-radius: var(--r);
+        font-family: var(--mono);
+        font-size: 12px;
+        color: #c06060;
+        line-height: 1.6;
+      }
+      .state-error::before {
+        content: "error: ";
+        color: #804040;
+      }
+
+      /* ── RESULT: META BAR ── */
+      .result-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 14px;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .meta-chip {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        color: var(--text-3);
+        letter-spacing: 0.04em;
+      }
+      .meta-sep {
+        color: var(--border-hi);
+        font-size: 10px;
+      }
+
+      /* ── RESULT: ROAST ── */
+      .result {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .score-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .grade {
+        width: 52px;
+        height: 52px;
+        border: 1px solid var(--border-hi);
+        border-radius: var(--r);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--mono);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--white);
+        flex-shrink: 0;
+        letter-spacing: -0.02em;
+      }
+
+      .score-col {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .score-num {
+        font-family: var(--mono);
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--white);
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-num sub {
+        font-size: 14px;
+        color: var(--text-3);
+        vertical-align: baseline;
+      }
+
+      .score-lbl {
+        font-size: 11px;
+        color: var(--text-3);
+        margin-top: 4px;
+      }
+
+      .score-track {
+        height: 2px;
+        background: var(--border);
+        border-radius: 1px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+      .score-fill {
+        height: 100%;
+        background: var(--white);
+        border-radius: 1px;
+        transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* Roast text */
+      .roast-quote {
+        font-size: 13px;
+        line-height: 1.75;
+        color: var(--text);
+        padding: 13px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        border-left: 2px solid var(--border-hi);
+      }
+
+      /* Section */
+      .sec {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .sec-label {
+        font-size: 9.5px;
+        color: var(--text-3);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+      }
+
+      /* Issues / positives */
+      .item-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 11px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        font-size: 12px;
+        color: var(--text-2);
+        line-height: 1.55;
+      }
+      .item-glyph {
+        color: var(--text-3);
+        flex-shrink: 0;
+        margin-top: 1px;
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      /* Code block */
+      .code-block {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        overflow: hidden;
+      }
+      .code-block-hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .code-block-lang {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        color: var(--text-3);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .copy-btn {
+        font-size: 10.5px;
+        color: var(--text-3);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-family: var(--mono);
+        padding: 2px 4px;
+        transition: color 0.1s;
+      }
+      .copy-btn:hover {
+        color: var(--text);
+      }
+
+      .code-block pre {
+        padding: 13px 14px;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--text);
+        overflow-x: auto;
+        white-space: pre;
+      }
+
+      /* Explain items */
+      .explain-item {
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        overflow: hidden;
+      }
+      .explain-issue {
+        padding: 7px 11px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-2);
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+      .explain-why {
+        padding: 9px 11px;
+        font-size: 12px;
+        color: var(--text-2);
+        line-height: 1.6;
+      }
+
+      /* ── RESULT: CODE METRICS ── */
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .metric-card {
+        padding: 10px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+      }
+      .metric-name {
+        font-size: 9.5px;
+        color: var(--text-3);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 6px;
+      }
+      .metric-val {
+        font-family: var(--mono);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--white);
+        line-height: 1;
+      }
+      .metric-val sub {
+        font-size: 11px;
+        color: var(--text-3);
+      }
+      .metric-track {
+        height: 2px;
+        background: var(--border);
+        border-radius: 1px;
+        margin-top: 7px;
+      }
+      .metric-fill {
+        height: 100%;
+        background: var(--white);
+        border-radius: 1px;
+      }
+
+      .risk-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .risk-row:last-child {
+        border-bottom: none;
+      }
+      .risk-name {
+        font-size: 12px;
+        color: var(--text-2);
+      }
+      .risk-pct {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--white);
+      }
+
+      /* ── RESULT: COMPLEXITY ORACLE ── */
+      .big-o-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .big-o-card {
+        padding: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        text-align: center;
+      }
+      .big-o-lbl {
+        font-size: 9.5px;
+        color: var(--text-3);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 8px;
+      }
+      .big-o-val {
+        font-family: var(--mono);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--white);
+        letter-spacing: -0.02em;
+      }
+
+      .humor-bar {
+        padding: 11px 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 2px solid var(--border-hi);
+        border-radius: var(--r);
+        font-size: 12px;
+        color: var(--text-2);
+        font-style: italic;
+        line-height: 1.6;
+      }
+
+      .step-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .step-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .step-n {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text-3);
+        width: 20px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .step-text {
+        font-size: 12px;
+        color: var(--text-2);
+        line-height: 1.55;
+      }
+
+      /* ── CONFIDENCE ROW ── */
+      .conf-row {
+        padding: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+      }
+      .conf-title {
+        font-size: 9.5px;
+        color: var(--text-3);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .conf-val {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-2);
+        margin-top: 5px;
+      }
+
+      /* ── SCROLLBAR ── */
+      ::-webkit-scrollbar {
+        width: 3px;
+        height: 3px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border-hi);
+        border-radius: 2px;
+      }
+
+      /* ── MOBILE ── */
+      @media (max-width: 720px) {
+        body {
+          overflow: auto;
+          height: auto;
+        }
+        .ws {
+          grid-template-columns: 1fr;
+        }
+        .input-panel {
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+          height: 45vh;
+        }
+        .output-panel {
+          min-height: 50vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HEADER -->
+    <header class="hdr">
+      <span class="logo">Roast<em>.</em>My<em>.</em>Code</span>
+      <div class="hdr-right">
+        <span class="hdr-badge" id="modelBadge">—</span>
+        <div id="statusDot" title="Backend status"></div>
+      </div>
+    </header>
+
+    <!-- MODE RAIL -->
+    <div class="mode-rail" id="modeRail">
+      <span style="font-size: 11px; color: var(--text-3)">Loading modes…</span>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="ws">
+      <!-- LEFT: INPUT -->
+      <div class="input-panel">
+        <div class="panel-bar">
+          <span class="panel-label">Input</span>
+          <select class="lang-select" id="langSel">
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="java">Java</option>
+            <option value="cpp" selected>C++</option>
+            <option value="c">C</option>
+            <option value="go">Go</option>
+            <option value="rust">Rust</option>
+            <option value="ruby">Ruby</option>
+            <option value="php">PHP</option>
+            <option value="swift">Swift</option>
+            <option value="kotlin">Kotlin</option>
+            <option value="sql">SQL</option>
+            <option value="bash">Bash</option>
+          </select>
+        </div>
+
+        <div class="code-wrap">
+          <textarea
+            class="code-input"
+            id="codeInput"
+            placeholder="# paste your code here and brace for impact"
+            spellcheck="false"
+            autocomplete="off"
+            autocorrect="off"
+          ></textarea>
+        </div>
+
+        <div class="action-bar" id="actionBar">
+          <button class="btn btn-prim" id="btnMain">Roast</button>
+          <button class="btn btn-sec" id="btnFix" title="Roast + suggest a fix">
+            + Fix
+          </button>
+          <button
+            class="btn btn-sec"
+            id="btnExplain"
+            title="Roast + explain each issue"
+          >
+            + Explain
+          </button>
+          <span class="char-meter" id="charMeter">0 / 10000</span>
+        </div>
+      </div>
+
+      <!-- RIGHT: OUTPUT -->
+      <div class="output-panel">
+        <div class="panel-bar">
+          <span class="panel-label" id="outputLabel">Output</span>
+        </div>
+
+        <div class="output-scroll" id="outputScroll">
+          <div class="state-empty">
+            <div class="state-empty-glyph">{ }</div>
+            <div class="state-empty-title">No output yet</div>
+            <div class="state-empty-hint">
+              Paste code → pick a persona → hit Roast
+            </div>
+          </div>
+        </div>
+
+        <div class="result-meta" id="resultMeta" style="display: none">
+          <span class="meta-chip" id="metaModel">—</span>
+          <span class="meta-sep">·</span>
+          <span class="meta-chip" id="metaMode">—</span>
+          <span class="meta-sep">·</span>
+          <span class="meta-chip" id="metaTime">—</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ── CONFIG ──────────────────────────────────────────────
+      const API = ""; // empty = same origin
+
+      // Endpoint map — mirrors main.py's `routes` context exactly.
+      // category 'analysis' always hits /analysis/metrics/.
+      // category 'roast' hits one of /roast/personality|fix|explain/ depending
+      // on which action button was pressed.
+      const ROUTES = {
+        personality: "/roast/personality/",
+        fix: "/roast/fix/",
+        explain: "/roast/explain/",
+        analyze: "/analysis/metrics/",
+      };
+
+      const LOAD_MSGS = {
+        personality: ["Summoning the persona…", "Bracing for impact…"],
+        fix: ["Roasting and rewriting…", "Finding a better way…"],
+        explain: ["Dissecting the issues…", "Preparing the lecture…"],
+        analyze: ["Running metrics…", "Crunching the numbers…"],
+      };
+
+      // ── STATE ────────────────────────────────────────────────
+      const state = {
+        modes: [],
+        selectedMode: null,
+        loading: false,
+      };
+
+      // ── DOM ──────────────────────────────────────────────────
+      const $ = (id) => document.getElementById(id);
+      const modeRail = $("modeRail");
+      const codeInput = $("codeInput");
+      const langSel = $("langSel");
+      const charMeter = $("charMeter");
+      const outputScroll = $("outputScroll");
+      const resultMeta = $("resultMeta");
+      const metaModel = $("metaModel");
+      const metaMode = $("metaMode");
+      const metaTime = $("metaTime");
+      const outputLabel = $("outputLabel");
+      const modelBadge = $("modelBadge");
+      const statusDot = $("statusDot");
+      const btnMain = $("btnMain");
+      const btnFix = $("btnFix");
+      const btnExplain = $("btnExplain");
+      const actionBar = $("actionBar");
+
+      // ── UTILS ────────────────────────────────────────────────
+      const esc = (s) =>
+        String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+
+      const fmtKey = (k) =>
+        k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+      const pct = (v) => `${(Number(v) * 100).toFixed(0)}`;
+
+      const setStatus = (s) => {
+        statusDot.className = "";
+        statusDot.classList.add(s);
+      };
+
+      const disableButtons = (v) => {
+        btnMain.disabled = v;
+        btnFix.disabled = v;
+        btnExplain.disabled = v;
+      };
+
+      // ── CHAR COUNTER ─────────────────────────────────────────
+      codeInput.addEventListener("input", () => {
+        const n = codeInput.value.length;
+        charMeter.textContent = `${n} / 10000`;
+        charMeter.className =
+          "char-meter" + (n > 3800 ? " warn" : "") + (n > 10000 ? " over" : "");
+      });
+
+      // ── FETCH MODES ──────────────────────────────────────────
+      // Both /roast/modes/ and /analysis/modes/ are real backend endpoints —
+      // fetch both instead of hardcoding analysis modes client-side, so a
+      // new mode added on the backend just appears here with no frontend change.
+      async function fetchModes() {
+        try {
+          const [roastRes, analysisRes] = await Promise.all([
+            fetch(`${API}/roast/modes/`),
+            fetch(`${API}/analysis/modes/`),
+          ]);
+          const roastJson = await roastRes.json();
+          const analysisJson = await analysisRes.json();
+
+          const roast = (roastJson.data || []).map((m) => ({
+            ...m,
+            category: "roast",
+          }));
+          const analysis = (analysisJson.data || []).map((m) => ({
+            ...m,
+            category: "analysis",
+          }));
+
+          state.modes = [...roast, ...analysis];
+          state.selectedMode = state.modes[0]?.key ?? null;
+          renderModeRail();
+          updateActionBar();
+          setStatus("online");
+        } catch {
+          modeRail.innerHTML = `<span style="font-size:11px;color:#844">⚠ Backend offline — is FastAPI running?</span>`;
+          setStatus("error");
+        }
+      }
+
+      // ── RENDER MODE RAIL ─────────────────────────────────────
+      function renderModeRail() {
+        modeRail.innerHTML = "";
+        let lastCat = null;
+
+        state.modes.forEach((m) => {
+          if (lastCat === "roast" && m.category === "analysis") {
+            const sep = document.createElement("div");
+            sep.className = "mode-sep";
+            sep.innerHTML = `
+            <div class="mode-sep-line"></div>
+            <span class="mode-sep-label">Analysis</span>
+            <div class="mode-sep-line"></div>`;
+            modeRail.appendChild(sep);
+          }
+          lastCat = m.category;
+
+          const card = document.createElement("div");
+          card.className = `mode-card${m.key === state.selectedMode ? " active" : ""}`;
+          card.dataset.key = m.key;
+          card.innerHTML = `
+          <span class="mc-name">${esc(m.name || fmtKey(m.key))}</span>
+          <span class="mc-tag">${esc(m.tagline)}</span>`;
+
+          card.addEventListener("click", () => {
+            if (state.loading) return;
+            state.selectedMode = m.key;
+            document
+              .querySelectorAll(".mode-card")
+              .forEach((c) => c.classList.remove("active"));
+            card.classList.add("active");
+            updateActionBar();
+          });
+          modeRail.appendChild(card);
+        });
+      }
+
+      // ── UPDATE ACTION BAR based on mode type ─────────────────
+      function updateActionBar() {
+        const mode = state.modes.find((m) => m.key === state.selectedMode);
+        const isAnalysis = mode?.category === "analysis";
+
+        if (isAnalysis) {
+          btnMain.textContent = "Analyze";
+          btnFix.style.display = "none";
+          btnExplain.style.display = "none";
+        } else {
+          btnMain.textContent = "Roast";
+          btnFix.style.display = "";
+          btnExplain.style.display = "";
+        }
+      }
+
+      // ── API CALLS ─────────────────────────────────────────────
+      // `action` is one of: personality | fix | explain | analyze
+      // The route is resolved from ROUTES, not string-built, so an analysis
+      // mode can never accidentally hit a /roast/ endpoint or vice versa.
+      async function call(action) {
+        const code = codeInput.value.trim();
+        if (!code) return showError("Code input is empty.");
+        if (code.length < 10)
+          return showError("Code must be at least 10 characters.");
+        if (code.length > 10000)
+          return showError("Code exceeds the 10000-character limit.");
+        if (!state.selectedMode) return showError("No mode selected.");
+
+        const path = ROUTES[action];
+        if (!path) return showError(`Unknown action: ${action}`);
+
+        state.loading = true;
+        disableButtons(true);
+        setStatus("loading");
+        showLoading(action);
+
+        try {
+          const res = await fetch(`${API}${path}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code,
+              mode: state.selectedMode,
+              language: langSel.value,
+            }),
+          });
+
+          const json = await res.json();
+          const meta = json.meta || {};
+
+          modelBadge.textContent = meta.model || "—";
+
+          if (!json.success) {
+            showError(json.error?.detail || "Request failed.");
+          } else {
+            renderResult(json.data, action);
+            showMeta(meta);
+          }
+          setStatus("online");
+        } catch (e) {
+          showError(`Network error: ${e.message}`);
+          setStatus("error");
+        } finally {
+          state.loading = false;
+          disableButtons(false);
+        }
+      }
+
+      // ── SHOW STATES ───────────────────────────────────────────
+      function showLoading(action) {
+        const msgs = LOAD_MSGS[action] || ["Processing…"];
+        const msg = msgs[Math.floor(Math.random() * msgs.length)];
+        outputScroll.innerHTML = `
+        <div class="state-loading">
+          <div class="spinner">
+            <div class="spin-dot"></div>
+            <div class="spin-dot"></div>
+            <div class="spin-dot"></div>
+          </div>
+          <span class="loading-msg">${esc(msg)}</span>
+        </div>`;
+        resultMeta.style.display = "none";
+      }
+
+      function showError(msg) {
+        outputScroll.innerHTML = `<div class="state-error">${esc(msg)}</div>`;
+        resultMeta.style.display = "none";
+        disableButtons(false);
+        state.loading = false;
+      }
+
+      function showMeta(meta) {
+        const mode = state.modes.find((m) => m.key === state.selectedMode);
+        resultMeta.style.display = "flex";
+        metaModel.textContent = meta.model || "—";
+        metaMode.textContent = mode?.name || state.selectedMode || "—";
+        metaTime.textContent = meta.timestamp
+          ? new Date(meta.timestamp).toLocaleTimeString()
+          : "—";
+      }
+
+      // ── RENDER RESULT ─────────────────────────────────────────
+      function renderResult(data) {
+        if (!data) {
+          showError("Empty response from server.");
+          return;
+        }
+
+        if (data.time_complexity !== undefined) renderComplexity(data);
+        else if (data.overall_score !== undefined || data.metrics)
+          renderMetrics(data);
+        else if (data.roast !== undefined || data.score !== undefined)
+          renderRoast(data);
+        else {
+          // Unknown shape — raw dump, so new backend fields never vanish silently
+          outputScroll.innerHTML = `
+          <pre style="font-family:var(--mono);font-size:11.5px;color:var(--text-2);overflow:auto;line-height:1.6">${esc(JSON.stringify(data, null, 2))}</pre>`;
+        }
+      }
+
+      // ── RENDER: ROAST ─────────────────────────────────────────
+      function renderRoast(d) {
+        const score = d.score ?? 0;
+        const grade = d.grade ?? "?";
+        const lbl = d.score_label ?? "";
+        const roast = d.roast ?? "";
+        const issues = asArr(d.issues);
+        const positive = asArr(d.positive);
+        const fixed = d.fixed ?? null;
+        const explains = d.explanations ?? null;
+
+        let h = `<div class="result">`;
+
+        h += `
+        <div class="score-row">
+          <div class="grade">${esc(grade)}</div>
+          <div class="score-col">
+            <div class="score-num">${score}<sub>/100</sub></div>
+            <div class="score-lbl">${esc(lbl)}</div>
+            <div class="score-track"><div class="score-fill" style="width:${score}%"></div></div>
+          </div>
+        </div>`;
+
+        if (roast) h += `<div class="roast-quote">${esc(roast)}</div>`;
+
+        if (issues.length) {
+          h += `<div class="sec"><span class="sec-label">Issues · ${issues.length}</span><div class="item-list">`;
+          issues.forEach((iss) => {
+            const txt = str(iss);
+            const why = explains?.[txt];
+            if (why) {
+              h += `<div class="explain-item">
+              <div class="explain-issue">${esc(txt)}</div>
+              <div class="explain-why">${esc(why)}</div>
+            </div>`;
+            } else {
+              h += `<div class="item"><span class="item-glyph">›</span>${esc(txt)}</div>`;
+            }
+          });
+          h += `</div></div>`;
+        }
+
+        if (positive.length) {
+          h += `<div class="sec"><span class="sec-label">Positives · ${positive.length}</span><div class="item-list">`;
+          positive.forEach((p) => {
+            h += `<div class="item"><span class="item-glyph">✓</span>${esc(str(p))}</div>`;
+          });
+          h += `</div></div>`;
+        }
+
+        if (fixed) {
+          h += `<div class="sec"><span class="sec-label">Fixed Code</span>
+          <div class="code-block">
+            <div class="code-block-hdr">
+              <span class="code-block-lang">${esc(langSel.value)}</span>
+              <button class="copy-btn" onclick="copyBlock(this)">copy</button>
+            </div>
+            <pre data-raw="${esc(fixed)}">${esc(fixed)}</pre>
+          </div></div>`;
+        }
+
+        h += `</div>`;
+        outputScroll.innerHTML = h;
+      }
+
+      // ── RENDER: CODE METRICS ──────────────────────────────────
+      function renderMetrics(d) {
+        const overall = d.overall_score ?? 0;
+        const grade = d.grade ?? "?";
+        const metrics = d.metrics ?? {};
+        const risks = d.risk_profile ?? {};
+        const conf = d.confidence ?? 0;
+        const insights = asArr(d.insights);
+
+        let h = `<div class="result">`;
+
+        h += `
+        <div class="score-row">
+          <div class="grade">${esc(grade)}</div>
+          <div class="score-col">
+            <div class="score-num">${pct(overall)}<sub>/100</sub></div>
+            <div class="score-lbl">Overall Score</div>
+            <div class="score-track"><div class="score-fill" style="width:${pct(overall)}%"></div></div>
+          </div>
+        </div>`;
+
+        if (Object.keys(metrics).length) {
+          h += `<div class="sec"><span class="sec-label">Metrics</span><div class="metrics-grid">`;
+          Object.entries(metrics).forEach(([k, v]) => {
+            h += `<div class="metric-card">
+            <div class="metric-name">${esc(fmtKey(k))}</div>
+            <div class="metric-val">${pct(v)}<sub>%</sub></div>
+            <div class="metric-track"><div class="metric-fill" style="width:${pct(v)}%"></div></div>
+          </div>`;
+          });
+          h += `</div></div>`;
+        }
+
+        if (Object.keys(risks).length) {
+          h += `<div class="sec"><span class="sec-label">Risk Profile</span>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;">`;
+          Object.entries(risks).forEach(([k, v]) => {
+            h += `<div class="risk-row"><span class="risk-name">${esc(fmtKey(k))}</span><span class="risk-pct">${pct(v)}%</span></div>`;
+          });
+          h += `</div></div>`;
+        }
+
+        if (insights.length) {
+          h += `<div class="sec"><span class="sec-label">Insights</span><div class="item-list">`;
+          insights.forEach((ins) => {
+            h += `<div class="item"><span class="item-glyph">›</span>${esc(str(ins))}</div>`;
+          });
+          h += `</div></div>`;
+        }
+
+        h += `<div class="conf-row">
+        <div class="conf-title">Confidence</div>
+        <div class="score-track"><div class="score-fill" style="width:${pct(conf)}%"></div></div>
+        <div class="conf-val">${pct(conf)}%</div>
+      </div>`;
+
+        h += `</div>`;
+        outputScroll.innerHTML = h;
+      }
+
+      // ── RENDER: COMPLEXITY ORACLE ─────────────────────────────
+      function renderComplexity(d) {
+        const tC = d.time_complexity ?? "—";
+        const sC = d.space_complexity ?? "—";
+        const dom = d.dominant_factor ?? "—";
+        const conf = d.confidence ?? 0;
+        const steps = asArr(d.explanation);
+        const risks = asArr(d.hidden_risks);
+        const humor = d.humor ?? null;
+
+        let h = `<div class="result">`;
+
+        h += `<div class="big-o-row">
+        <div class="big-o-card">
+          <div class="big-o-lbl">Time Complexity</div>
+          <div class="big-o-val">${esc(tC)}</div>
+        </div>
+        <div class="big-o-card">
+          <div class="big-o-lbl">Space Complexity</div>
+          <div class="big-o-val">${esc(sC)}</div>
+        </div>
+      </div>`;
+
+        h += `<div class="conf-row">
+        <div class="conf-title">Dominant Factor</div>
+        <div style="font-size:13px;color:var(--text);margin-bottom:8px">${esc(dom)}</div>
+        <div class="conf-title" style="margin-bottom:4px">Confidence</div>
+        <div class="score-track"><div class="score-fill" style="width:${pct(conf)}%"></div></div>
+        <div class="conf-val">${pct(conf)}%</div>
+      </div>`;
+
+        if (humor) h += `<div class="humor-bar">${esc(humor)}</div>`;
+
+        if (steps.length) {
+          h += `<div class="sec"><span class="sec-label">Analysis</span><div class="step-list">`;
+          steps.forEach((s, i) => {
+            h += `<div class="step-item">
+            <span class="step-n">${String(i + 1).padStart(2, "0")}.</span>
+            <span class="step-text">${esc(str(s))}</span>
+          </div>`;
+          });
+          h += `</div></div>`;
+        }
+
+        if (risks.length) {
+          h += `<div class="sec"><span class="sec-label">Hidden Risks</span><div class="item-list">`;
+          risks.forEach((r) => {
+            h += `<div class="item"><span class="item-glyph">⚠</span>${esc(str(r))}</div>`;
+          });
+          h += `</div></div>`;
+        }
+
+        h += `</div>`;
+        outputScroll.innerHTML = h;
+      }
+
+      // ── COPY CODE ─────────────────────────────────────────────
+      window.copyBlock = (btn) => {
+        const pre = btn.closest(".code-block").querySelector("pre");
+        const text = pre.dataset.raw || pre.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = "copied!";
+          setTimeout(() => (btn.textContent = "copy"), 2000);
+        });
+      };
+
+      // ── HELPERS ───────────────────────────────────────────────
+      const asArr = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+      const str = (v) => (typeof v === "string" ? v : JSON.stringify(v));
+
+      // ── BUTTON HANDLERS ───────────────────────────────────────
+      btnMain.addEventListener("click", () => {
+        const mode = state.modes.find((m) => m.key === state.selectedMode);
+        call(mode?.category === "analysis" ? "analyze" : "personality");
+      });
+      btnFix.addEventListener("click", () => call("fix"));
+      btnExplain.addEventListener("click", () => call("explain"));
+
+      // ── INIT ──────────────────────────────────────────────────
+      fetchModes();
+    </script>
+  </body>
+</html>

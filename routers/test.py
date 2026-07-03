@@ -92,7 +92,7 @@ async def test():
                 "EMPTY_CODE": "code field is empty or whitespace only",
                 "INVALID_INTENSITY": "intensity level not in supported list",
                 "INVALID_LANGUAGE": "language not in supported list",
-                "CODE_TOO_LONG": "code exceeds 4000 character limit",
+                "CODE_TOO_LONG": "code exceeds 10000 character limit",
                 "LLM_RATE_LIMIT": "Groq rate limit hit — try again shortly",
                 "LLM_PARSE_ERROR": "LLM returned malformed response",
                 "LLM_UNAVAILABLE": "Groq service temporarily unavailable",
